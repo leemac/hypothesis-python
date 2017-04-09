@@ -27,6 +27,7 @@ import traceback
 from random import Random
 from collections import namedtuple
 
+import hypothesis._lifecycle as _lifecycle
 from hypothesis.errors import Flaky, Timeout, NoSuchExample, \
     Unsatisfiable, InvalidArgument, FailedHealthCheck, \
     UnsatisfiedAssumption, HypothesisDeprecationWarning
@@ -127,6 +128,26 @@ def seed(seed):
     def accept(test):
         test._hypothesis_internal_use_seed = seed
         return test
+    return accept
+
+
+def lifecycle(target):
+    """Use this object instead of self as the recipient of lifecycle hooks when
+    Hypothesis executes the test.
+
+    If this object is None, this will disable all hooks. If it is not
+    None, it must define at least one valid hook or this will raise a
+    type error.
+
+    """
+    if target is not None and not _lifecycle.has_hooks(target):
+        raise InvalidArgument(
+            'Target %r defines no lifecycle hooks' % (
+                target,))
+
+    def accept(fn):
+        fn._hypothesis_internal_use_lifecycle_target = target
+        return fn
     return accept
 
 
@@ -232,18 +253,27 @@ def given(*generator_arguments, **generator_kwargs):
 
             import hypothesis.strategies as sd
 
-            selfy = None
-            arguments, kwargs = convert_positional_arguments(
-                wrapped_test, arguments, kwargs)
+            try:
+                lifecycle_object = \
+                    wrapped_test._hypothesis_internal_use_lifecycle_target
+            except AttributeError:
+                # No explicit lifecycle object. Try to find the self argument
+                # and see if it's supposed to be one.
 
-            # If the test function is a method of some kind, the bound object
-            # will be the first named argument if there are any, otherwise the
-            # first vararg (if any).
-            if argspec.args:
-                selfy = kwargs.get(argspec.args[0])
-            elif arguments:
-                selfy = arguments[0]
-            test_runner = new_style_executor(selfy)
+                lifecycle_object = None
+
+                arguments, kwargs = convert_positional_arguments(
+                    wrapped_test, arguments, kwargs)
+
+                # If the test function is a method of some kind, the bound
+                # object will be the first named argument if there are any,
+                # otherwise the first vararg (if any).
+                if argspec.args:
+                    lifecycle_object = kwargs.get(argspec.args[0])
+                elif arguments:
+                    lifecycle_object = arguments[0]
+
+            test_runner = new_style_executor(lifecycle_object)
 
             for example in reversed(getattr(
                 wrapped_test, 'hypothesis_explicit_examples', ()
@@ -307,8 +337,8 @@ def given(*generator_arguments, **generator_kwargs):
                 raise FailedHealthCheck(message)
 
             search_strategy = given_specifier
-            if selfy is not None:
-                search_strategy = WithRunner(search_strategy, selfy)
+            if lifecycle_object is not None:
+                search_strategy = WithRunner(search_strategy, lifecycle_object)
 
             search_strategy.validate()
 
@@ -565,6 +595,11 @@ def given(*generator_arguments, **generator_kwargs):
         wrapped_test._hypothesis_internal_use_settings = getattr(
             test, '_hypothesis_internal_use_settings', None
         ) or Settings.default
+        try:
+            wrapped_test._hypothesis_internal_use_lifecycle_target = \
+                test._hypothesis_internal_use_lifecycle_target
+        except AttributeError:
+            pass
         return wrapped_test
     return run_test_with_generator
 
