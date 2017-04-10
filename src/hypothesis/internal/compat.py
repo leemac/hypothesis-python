@@ -109,12 +109,19 @@ def quiet_raise(exc):
     def zero_byte_sequence(n):
         return bytes(n)
 
+    import struct
+
+    struct_pack = struct.pack
+
     from time import monotonic as benchmark_time
 else:
     import struct
 
+    def struct_pack(*args):
+        return hbytes(struct.pack(*args))
+
     def zero_byte_sequence(n):
-        return b'\0' * n
+        return hbytes(b'\0' * n)
 
     def int_from_bytes(data):
         assert isinstance(data, bytearray)
@@ -433,6 +440,8 @@ else:
     reasonable_byte_type = bytes
     string_types = (str,)
 
+
+EMPTY_BYTES = hbytes(b'')
 
 if PY2:
     def to_str(s):

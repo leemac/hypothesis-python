@@ -25,8 +25,9 @@ from weakref import WeakKeyDictionary
 from hypothesis import settings as Settings
 from hypothesis import Phase
 from hypothesis.reporting import debug_report
-from hypothesis.internal.compat import Counter, hbytes, hrange, \
-    text_type, bytes_from_list, to_bytes_sequence, unicode_safe_repr
+from hypothesis.internal.compat import EMPTY_BYTES, Counter, hbytes, \
+    hrange, text_type, bytes_from_list, to_bytes_sequence, \
+    unicode_safe_repr
 from hypothesis.utils.conventions import UniqueIdentifier
 from hypothesis.internal.conjecture.data import Status, StopTest, \
     ConjectureData
@@ -547,7 +548,7 @@ class ConjectureRunner(object):
                     ]
 
                     def replace(b):
-                        return hbytes(b''.join(
+                        return hbytes(EMPTY_BYTES.join(
                             hbytes(b if c == block else c) for c in parts
                         ))
                     minimize(
