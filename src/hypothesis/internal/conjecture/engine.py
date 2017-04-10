@@ -79,6 +79,9 @@ class ConjectureRunner(object):
         self.last_data.freeze()
 
     def test_function(self, data):
+        if self.tree[0] is DEAD:
+            raise RunIsComplete()
+
         self.call_count += 1
         try:
             self._test_function(data)
