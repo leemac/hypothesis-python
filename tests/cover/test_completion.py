@@ -17,7 +17,8 @@
 
 from __future__ import division, print_function, absolute_import
 
-from hypothesis import given, strategies as st, settings
+from hypothesis import strategies as st
+from hypothesis import given, settings
 
 
 @given(st.data())
