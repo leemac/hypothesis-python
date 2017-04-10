@@ -472,12 +472,10 @@ def test_garbage_collects_the_database():
 
 @given(st.randoms(), st.random_module())
 def test_maliciously_bad_generator(rnd, seed):
-    rnd = Random()
-
     @run_to_buffer
     def x(data):
-        for _ in range(rnd.randint(0, 100)):
-            data.draw_bytes(rnd.randint(0, 10))
+        for _ in range(rnd.randint(1, 100)):
+            data.draw_bytes(rnd.randint(1, 10))
         if rnd.randint(0, 1):
             data.mark_invalid()
         else:
