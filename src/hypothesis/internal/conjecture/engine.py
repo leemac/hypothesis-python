@@ -343,8 +343,10 @@ class ConjectureRunner(object):
                         if new_node is not DEAD:
                             result[i] = c
                             break
-                else:
-                    assert False
+                else:  # pragma: no cover
+                    assert False, (
+                        "Found a tree node which is live despite all its "
+                        "children being dead.")
             node_index = new_node_index
             node = new_node
         assert node is not DEAD
