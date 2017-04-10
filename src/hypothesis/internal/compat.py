@@ -397,9 +397,11 @@ class compatbytes(bytearray):
         raise ValueError('Value %r not in sequence %r' % (value, self))
 
     def __add__(self, value):
+        assert isinstance(value, compatbytes)
         return compatbytes(bytearray.__add__(self, value))
 
     def __radd__(self, value):
+        assert isinstance(value, compatbytes)
         return compatbytes(bytearray.__add__(value, self))
 
     def __mul__(self, value):

@@ -264,7 +264,9 @@ class ConjectureRunner(object):
                 i = self.random.choice(choices)
                 return self.last_data.buffer[i:i + n]
             else:
-                return distribution(self.random, n)
+                result = distribution(self.random, n)
+                assert isinstance(result, hbytes)
+                return result
 
         def flip_bit(data, n, distribution):
             buf = bytearray(
@@ -518,7 +520,7 @@ class ConjectureRunner(object):
                 buf = self.last_data.buffer
                 block = buf[u:v]
                 n = v - u
-                all_blocks = sorted(set([bytes(n)] + [
+                all_blocks = sorted(set([hbytes(n)] + [
                     buf[a:a + n]
                     for a in self.last_data.block_starts[n]
                 ]))
