@@ -17,14 +17,17 @@
 
 from __future__ import division, print_function, absolute_import
 
-from hypothesis import settings as Settings
-from hypothesis.core import find
+import sys
+import os
 
 
 def minimal(
         definition, condition=None,
         settings=None, timeout_after=10, random=None
 ):
+    from hypothesis import settings as Settings
+    from hypothesis.core import find
+
     settings = Settings(
         settings,
         max_examples=50000,
@@ -42,3 +45,16 @@ def minimal(
         settings=settings,
         random=random,
     )
+
+
+HYPOTHESIS_ROOT = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), ".."))
+
+
+def escalate_hypothesis_assertion():
+    error_type, _, traceback = sys.exc_info()
+    if error_type != AssertionError:
+        return
+    filename = traceback.tb_frame.f_code.co_filename
+    if os.path.abspath(filename).startswith(HYPOTHESIS_ROOT):
+        raise

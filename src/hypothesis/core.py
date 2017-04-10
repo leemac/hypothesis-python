@@ -43,6 +43,7 @@ from hypothesis.internal.reflection import nicerepr, arg_string, \
     define_function_signature, convert_positional_arguments, \
     get_pretty_function_description
 from hypothesis.searchstrategy.strategies import SearchStrategy
+from hypothesis.internal.debug import escalate_hypothesis_assertion
 
 
 def new_random():
@@ -336,7 +337,7 @@ def given(*generator_arguments, **generator_kwargs):
                             lambda *args, **kwargs: None,
                         ))
                     except BaseException:
-                        pass
+                        escalate_hypothesis_assertion()
                 count = 0
                 overruns = 0
                 filtered_draws = 0
@@ -368,6 +369,7 @@ def given(*generator_arguments, **generator_kwargs):
                     except InvalidArgument:
                         raise
                     except Exception:
+                        escalate_hypothesis_assertion()
                         if (
                             HealthCheck.exception_in_generation in
                             settings.suppress_health_check
@@ -457,6 +459,7 @@ def given(*generator_arguments, **generator_kwargs):
                 ):
                     raise
                 except Exception:
+                    escalate_hypothesis_assertion()
                     last_exception[0] = traceback.format_exc()
                     verbose_report(last_exception[0])
                     data.mark_interesting()
