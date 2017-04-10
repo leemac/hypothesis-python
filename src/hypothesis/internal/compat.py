@@ -147,7 +147,7 @@ else:
         return hbytes(result)
 
     def bytes_from_list(ls):
-        return bytes(bytearray(ls))
+        return hbytes(bytearray(ls))
 
     def to_bytes_sequence(ls):
         return bytearray(ls)

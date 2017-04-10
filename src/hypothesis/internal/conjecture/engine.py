@@ -97,6 +97,7 @@ class ConjectureRunner(object):
         finally:
             data.freeze()
             self.note_details(data)
+
         if (
             data.status == Status.INTERESTING and (
                 self.last_data is None or
@@ -273,7 +274,7 @@ class ConjectureRunner(object):
             return hbytes(buf)
 
         def draw_zero(data, n, distribution):
-            return b'\0' * n
+            return hbytes(b'\0' * n)
 
         def draw_constant(data, n, distribution):
             return bytes_from_list([
@@ -304,6 +305,7 @@ class ConjectureRunner(object):
         return draw_mutated
 
     def __rewrite_for_novelty(self, data, result):
+        assert isinstance(result, hbytes)
         try:
             node_index = data.__current_node_index
         except AttributeError:
@@ -319,6 +321,7 @@ class ConjectureRunner(object):
         assert node is not DEAD
 
         for i, b in enumerate(result):
+            assert isinstance(b, int)
             try:
                 new_node_index = node[b]
             except KeyError:
@@ -544,9 +547,9 @@ class ConjectureRunner(object):
                     ]
 
                     def replace(b):
-                        return b''.join(
-                            bytes(b if c == block else c) for c in parts
-                        )
+                        return hbytes(b''.join(
+                            hbytes(b if c == block else c) for c in parts
+                        ))
                     minimize(
                         block,
                         lambda b: self.incorporate_new_buffer(replace(b)),
