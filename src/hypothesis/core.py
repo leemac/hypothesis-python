@@ -626,7 +626,8 @@ def find(specifier, condition, settings=None, random=None, database_key=None):
                 last_data[0] = data
         if success and not data.frozen:
             data.mark_interesting()
-    from hypothesis.internal.conjecture.engine import ConjectureRunner
+    from hypothesis.internal.conjecture.engine import ConjectureRunner, \
+        ExitReason
     from hypothesis.internal.conjecture.data import ConjectureData, Status
 
     start = time.time()
@@ -641,7 +642,10 @@ def find(specifier, condition, settings=None, random=None, database_key=None):
         data = ConjectureData.for_buffer(runner.last_data.buffer)
         with BuildContext(data):
             return data.draw(search)
-    if runner.valid_examples <= settings.min_satisfying_examples:
+    if (
+        runner.valid_examples <= settings.min_satisfying_examples and
+        runner.exit_reason != ExitReason.finished
+    ):
         if settings.timeout > 0 and run_time > settings.timeout:
             raise Timeout((
                 'Ran out of time before finding enough valid examples for '
