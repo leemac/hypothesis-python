@@ -435,6 +435,7 @@ def given(*generator_arguments, **generator_kwargs):
                     )
             last_exception = [None]
             repr_for_last_exception = [None]
+            at_least_one_success = [False]
 
             def evaluate_test_data(data):
                 try:
@@ -454,6 +455,7 @@ def given(*generator_arguments, **generator_kwargs):
                     StopTest,
                 ):
                     raise
+                    at_least_one_success[0] = True
                 except Exception:
                     last_exception[0] = traceback.format_exc()
                     verbose_report(last_exception[0])
@@ -489,7 +491,10 @@ def given(*generator_arguments, **generator_kwargs):
                 if runner.valid_examples < min(
                     settings.min_satisfying_examples,
                     settings.max_examples,
-                ) and runner.exit_reason != ExitReason.finished:
+                ) and not (
+                    runner.exit_reason == ExitReason.finished and
+                    at_least_one_success[0]
+                ):
                     if timed_out:
                         raise Timeout((
                             'Ran out of time before finding a satisfying '
