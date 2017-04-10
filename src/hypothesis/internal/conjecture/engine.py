@@ -302,7 +302,7 @@ class ConjectureRunner(object):
 
         return draw_mutated
 
-    def __rewrite_for_novelty(self, data, result, bound=False):
+    def __rewrite_for_novelty(self, data, result):
         try:
             node_index = data.__current_node_index
         except AttributeError:
@@ -330,8 +330,6 @@ class ConjectureRunner(object):
                 if isinstance(result, hbytes):
                     result = bytearray(result)
                 for c in range(256):
-                    if bound and c >= b:
-                        data.mark_invalid()
                     if c not in node:
                         result[i] = c
                         data.__hit_novelty = True
