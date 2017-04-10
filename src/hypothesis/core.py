@@ -459,7 +459,8 @@ def given(*generator_arguments, **generator_kwargs):
                     verbose_report(last_exception[0])
                     data.mark_interesting()
 
-            from hypothesis.internal.conjecture.engine import ConjectureRunner
+            from hypothesis.internal.conjecture.engine import \
+                ConjectureRunner, ExitReason
 
             falsifying_example = None
             database_key = str_to_bytes(fully_qualified_name(test))
@@ -488,7 +489,7 @@ def given(*generator_arguments, **generator_kwargs):
                 if runner.valid_examples < min(
                     settings.min_satisfying_examples,
                     settings.max_examples,
-                ):
+                ) and runner.exit_reason != ExitReason.finished:
                     if timed_out:
                         raise Timeout((
                             'Ran out of time before finding a satisfying '
