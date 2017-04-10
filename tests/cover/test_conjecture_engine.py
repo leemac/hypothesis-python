@@ -18,7 +18,7 @@
 from __future__ import division, print_function, absolute_import
 
 import time
-from random import Random
+from random import Random, seed as seed_random
 
 from hypothesis import strategies as st
 from hypothesis import Phase, given, settings
@@ -26,7 +26,7 @@ from hypothesis.database import ExampleDatabase
 from hypothesis.internal.compat import hbytes, int_from_bytes, \
     bytes_from_list
 from hypothesis.internal.conjecture.data import Status, ConjectureData
-from hypothesis.internal.conjecture.engine import ConjectureRunner
+from hypothesis.internal.conjecture.engine import ConjectureRunner, ExitReason
 
 MAX_SHRINKS = 2000
 
@@ -480,3 +480,50 @@ def test_maliciously_bad_generator(rnd, seed):
             data.mark_invalid()
         else:
             data.mark_interesting()
+
+
+@given(st.random_module())
+def test_lot_of_dead_nodes(rnd):
+    @run_to_buffer
+    def x(data):
+        for i in range(5):
+            if data.draw_bytes(1)[0] != i:
+                data.mark_invalid()
+        data.mark_interesting()
+    assert x == hbytes([0, 1, 2, 3, 4])
+
+
+def test_one_dead_branch():
+    seed_random(0)
+    seen = set()
+
+    @run_to_buffer
+    def x(data):
+        i = data.draw_bytes(1)[0]
+        if i > 0:
+            data.mark_invalid()
+        i = data.draw_bytes(1)[0]
+        if len(seen) < 255:
+            seen.add(i)
+        elif i not in seen:
+            data.mark_interesting()
+
+
+def test_fully_exhaust_base():
+    """In this test we generate all possible values for the first byte but
+    never get to the point where we exhaust the root of the tree."""
+    seed_random(0)
+
+    seen = set()
+
+    def f(data):
+        seen.add(data.draw_bytes(2))
+
+    runner = ConjectureRunner(f, settings=settings(
+        max_examples=5000, max_iterations=10000, max_shrinks=MAX_SHRINKS,
+        buffer_size=1024,
+        database=None,
+    ))
+    runner.run()
+    assert len(seen) > 256
+    assert len({x[0] for x in seen}) == 256

@@ -115,8 +115,10 @@ class ConjectureRunner(object):
                 self.tree.append({})
                 tree_node[b] = i
             tree_node = self.tree[i]
+            if tree_node is DEAD:
+                break
 
-        if data.status != Status.OVERRUN:
+        if data.status != Status.OVERRUN and tree_node is not DEAD:
             self.tree[i] = DEAD
 
             for j in reversed(indices):
