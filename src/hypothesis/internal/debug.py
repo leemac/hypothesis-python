@@ -17,8 +17,8 @@
 
 from __future__ import division, print_function, absolute_import
 
-import sys
 import os
+import sys
 
 
 def minimal(
@@ -48,7 +48,7 @@ def minimal(
 
 
 HYPOTHESIS_ROOT = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), ".."))
+    os.path.join(os.path.dirname(__file__), '..'))
 
 
 def escalate_hypothesis_assertion():
