@@ -80,6 +80,7 @@ class ConjectureRunner(object):
 
     def test_function(self, data):
         if self.tree[0] is DEAD:
+            self.exit_reason = ExitReason.finished
             raise RunIsComplete()
 
         self.call_count += 1
