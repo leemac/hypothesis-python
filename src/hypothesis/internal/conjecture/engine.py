@@ -27,9 +27,12 @@ from hypothesis import Phase
 from hypothesis.reporting import debug_report
 from hypothesis.internal.compat import Counter, hbytes, hrange, \
     text_type, bytes_from_list, to_bytes_sequence, unicode_safe_repr
+from hypothesis.utils.conventions import UniqueIdentifier
 from hypothesis.internal.conjecture.data import Status, StopTest, \
     ConjectureData
 from hypothesis.internal.conjecture.minimizer import minimize
+
+DEAD = UniqueIdentifier('DEAD')
 
 
 class ExitReason(Enum):
@@ -62,16 +65,15 @@ class ConjectureRunner(object):
         self.start_time = time.time()
         self.random = random or Random(getrandbits(128))
         self.database_key = database_key
-        self.seen = set()
-        self.duplicates = 0
         self.status_runtimes = {}
         self.events_to_strings = WeakKeyDictionary()
+        self.tree = [{}]
 
     def new_buffer(self):
         self.last_data = ConjectureData(
             max_length=self.settings.buffer_size,
             draw_bytes=lambda data, n, distribution:
-            distribution(self.random, n)
+            self.__rewrite_for_novelty(data, distribution(self.random, n))
         )
         self.test_function(self.last_data)
         self.last_data.freeze()
@@ -101,17 +103,36 @@ class ConjectureRunner(object):
         if data.status >= Status.VALID:
             self.valid_examples += 1
 
+        tree_node = self.tree[0]
+        indices = []
+        i = 0
+        for b in data.buffer:
+            indices.append(i)
+            try:
+                i = tree_node[b]
+            except KeyError:
+                i = len(self.tree)
+                self.tree.append({})
+                tree_node[b] = i
+            tree_node = self.tree[i]
+
+        if data.status != Status.OVERRUN:
+            self.tree[i] = DEAD
+
+            for j in reversed(indices):
+                if len(self.tree[j]) < 256:
+                    break
+                if all(self.tree[k] is DEAD for k in self.tree[j].values()):
+                    self.tree[j] = DEAD
+                else:
+                    break
+
     def consider_new_test_data(self, data):
         # Transition rules:
         #   1. Transition cannot decrease the status
         #   2. Any transition which increases the status is valid
         #   3. If the previous status was interesting, only shrinking
         #      transitions are allowed.
-        key = hbytes(data.buffer)
-        if key in self.seen:
-            self.duplicates += 1
-            return False
-        self.seen.add(key)
         if data.buffer == self.last_data.buffer:
             return False
         if self.last_data.status < data.status:
@@ -160,8 +181,6 @@ class ConjectureRunner(object):
         ))
 
     def incorporate_new_buffer(self, buffer):
-        if buffer in self.seen:
-            return False
         assert self.last_data.status == Status.INTERESTING
         if (
             self.settings.timeout > 0 and
@@ -169,9 +188,23 @@ class ConjectureRunner(object):
         ):
             self.exit_reason = ExitReason.timeout
             raise RunIsComplete()
+
         buffer = buffer[:self.last_data.index]
         if sort_key(buffer) >= sort_key(self.last_data.buffer):
             return False
+
+        i = 0
+        for b in buffer:
+            node = self.tree[i]
+            if node is DEAD:
+                return False
+            try:
+                i = node[b]
+            except KeyError:
+                break
+        else:
+            return False
+
         assert sort_key(buffer) <= sort_key(self.last_data.buffer)
         data = ConjectureData.for_buffer(buffer)
         self.test_function(data)
@@ -258,9 +291,61 @@ class ConjectureRunner(object):
             if (
                 data.index + n > len(self.last_data.buffer)
             ):
-                return distribution(self.random, n)
-            return self.random.choice(bits)(data, n, distribution)
+                result = distribution(self.random, n)
+            else:
+                result = self.random.choice(bits)(data, n, distribution)
+
+            return self.__rewrite_for_novelty(data, result)
+
         return draw_mutated
+
+    def __rewrite_for_novelty(self, data, result, bound=False):
+        try:
+            node_index = data.__current_node_index
+        except AttributeError:
+            assert len(data.buffer) == 0
+            node_index = 0
+            data.__current_node_index = node_index
+            data.__hit_novelty = False
+
+        if data.__hit_novelty:
+            return result
+
+        node = self.tree[node_index]
+        assert node is not DEAD
+
+        for i, b in enumerate(result):
+            try:
+                new_node_index = node[b]
+            except KeyError:
+                data.__hit_novelty = True
+                return result
+
+            new_node = self.tree[new_node_index]
+
+            if new_node is DEAD:
+                if isinstance(result, hbytes):
+                    result = bytearray(result)
+                for c in range(256):
+                    if bound and c >= b:
+                        data.mark_invalid()
+                    if c not in node:
+                        result[i] = c
+                        data.__hit_novelty = True
+                        return hbytes(result)
+                    else:
+                        new_node_index = node[c]
+                        new_node = self.tree[new_node_index]
+                        if new_node is not DEAD:
+                            result[i] = c
+                            break
+                else:
+                    assert False
+            node_index = new_node_index
+            node = new_node
+        assert node is not DEAD
+        data.__current_node_index = node_index
+        return hbytes(result)
 
     def _run(self):
         self.last_data = None
@@ -288,6 +373,7 @@ class ConjectureRunner(object):
                 self.test_function(data)
                 data.freeze()
                 self.last_data = data
+                self.consider_new_test_data(data)
                 if data.status < Status.VALID:
                     self.settings.database.delete(
                         self.database_key, existing)

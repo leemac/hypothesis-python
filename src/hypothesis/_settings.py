@@ -565,6 +565,12 @@ settings.define_setting(
 )
 
 settings.define_setting(
+    'seed_random',
+    default=True,
+    description="""Whether to dynamically seed the global random module"""
+)
+
+settings.define_setting(
     'report_statistics',
     default=Statistics.interesting,
     description=u"""
