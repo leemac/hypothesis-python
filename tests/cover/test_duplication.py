@@ -37,7 +37,6 @@ class Blocks(SearchStrategy):
 def test_does_not_duplicate_blocks(n):
     counts = Counter()
 
-    @settings(seed_random=False)
     @given(Blocks(n))
     def test(b):
         counts[b] += 1
@@ -49,7 +48,7 @@ def test_does_not_duplicate_blocks(n):
 def test_mostly_does_not_duplicate_blocks_even_when_failing(n):
     counts = Counter()
 
-    @settings(seed_random=False, database=None)
+    @settings(database=None)
     @given(Blocks(n))
     def test(b):
         counts[b] += 1
