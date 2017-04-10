@@ -18,13 +18,12 @@
 from __future__ import division, print_function, absolute_import
 
 import math
-import struct
 from collections import namedtuple
 
 import hypothesis.internal.conjecture.utils as d
 from hypothesis.control import assume
 from hypothesis.internal.compat import hbytes, struct_pack, int_to_bytes, \
-    int_from_bytes, bytes_from_list
+    struct_unpack, int_from_bytes, bytes_from_list
 from hypothesis.internal.floats import sign
 from hypothesis.searchstrategy.strategies import SearchStrategy, \
     MappedSearchStrategy
@@ -158,7 +157,7 @@ class FloatStrategy(SearchStrategy):
                     )
                 if self.permitted(f):
                     return struct_pack(b'!d', f)
-        result = struct.unpack(b'!d', hbytes(
+        result = struct_unpack(b'!d', hbytes(
             data.draw_bytes(8, draw_float_bytes)))[0]
         assume(self.permitted(result))
         return result
@@ -211,7 +210,7 @@ class FixedBoundedFloatStrategy(SearchStrategy):
                     self.upper_bound - self.lower_bound
                 ) + self.lower_bound
             return struct_pack(b'!d', f)
-        f = struct.unpack(b'!d', hbytes(
+        f = struct_unpack(b'!d', hbytes(
             data.draw_bytes(8, draw_float_bytes)))[0]
         assume(self.lower_bound <= f <= self.upper_bound)
         assume(sign(self.lower_bound) <= sign(f) <= sign(self.upper_bound))

@@ -99,13 +99,7 @@ class ConjectureRunner(object):
             data.freeze()
             self.note_details(data)
 
-        if (
-            data.status == Status.INTERESTING and (
-                self.last_data is None or
-                data.buffer != self.last_data.buffer
-            )
-        ):
-            self.debug_data(data)
+        self.debug_data(data)
         if data.status >= Status.VALID:
             self.valid_examples += 1
 

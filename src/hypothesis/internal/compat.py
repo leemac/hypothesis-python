@@ -112,6 +112,7 @@ def quiet_raise(exc):
     import struct
 
     struct_pack = struct.pack
+    struct_unpack = struct.unpack
 
     from time import monotonic as benchmark_time
 else:
@@ -119,6 +120,13 @@ else:
 
     def struct_pack(*args):
         return hbytes(struct.pack(*args))
+
+    if CAN_UNPACK_BYTE_ARRAY:
+        def struct_unpack(fmt, string):
+            return struct.unpack(fmt, string)
+    else:
+        def struct_unpack(fmt, string):
+            return struct.unpack(fmt, str(string))
 
     def zero_byte_sequence(n):
         return hbytes(b'\0' * n)
