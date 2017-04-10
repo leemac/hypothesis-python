@@ -138,6 +138,7 @@ def biased_coin(data, p):
 
 
 def write(data, string):
+    assert isinstance(string, hbytes)
     def distribution(random, n):
         assert n == len(string)
         return string
