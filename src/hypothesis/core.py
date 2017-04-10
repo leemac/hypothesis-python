@@ -447,6 +447,7 @@ def given(*generator_arguments, **generator_kwargs):
                             'Tests run under @given should return None, but '
                             '%s returned %r instead.'
                         ) % (test.__name__, result), HealthCheck.return_value)
+                    at_least_one_success[0] = True
                     return False
                 except UnsatisfiedAssumption:
                     data.mark_invalid()
@@ -455,7 +456,6 @@ def given(*generator_arguments, **generator_kwargs):
                     StopTest,
                 ):
                     raise
-                    at_least_one_success[0] = True
                 except Exception:
                     last_exception[0] = traceback.format_exc()
                     verbose_report(last_exception[0])
