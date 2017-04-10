@@ -52,9 +52,11 @@ HYPOTHESIS_ROOT = os.path.abspath(
 
 
 def escalate_hypothesis_assertion():
-    error_type, _, traceback = sys.exc_info()
+    error_type, _, tb = sys.exc_info()
     if error_type != AssertionError:
         return
-    filename = traceback.tb_frame.f_code.co_filename
+    import traceback
+    filename = traceback.extract_tb(tb)[-1][0]
+    traceback.print_exc()
     if os.path.abspath(filename).startswith(HYPOTHESIS_ROOT):
         raise
