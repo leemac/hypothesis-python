@@ -18,7 +18,8 @@
 from __future__ import division, print_function, absolute_import
 
 import time
-from random import Random, seed as seed_random
+from random import seed as seed_random
+from random import Random
 
 from hypothesis import strategies as st
 from hypothesis import Phase, given, settings
@@ -26,7 +27,8 @@ from hypothesis.database import ExampleDatabase
 from hypothesis.internal.compat import hbytes, int_from_bytes, \
     bytes_from_list
 from hypothesis.internal.conjecture.data import Status, ConjectureData
-from hypothesis.internal.conjecture.engine import ConjectureRunner, ExitReason
+from hypothesis.internal.conjecture.engine import ExitReason, \
+    ConjectureRunner
 
 MAX_SHRINKS = 2000
 
