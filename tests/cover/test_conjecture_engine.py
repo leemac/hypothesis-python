@@ -27,8 +27,7 @@ from hypothesis.database import ExampleDatabase
 from hypothesis.internal.compat import hbytes, int_from_bytes, \
     bytes_from_list
 from hypothesis.internal.conjecture.data import Status, ConjectureData
-from hypothesis.internal.conjecture.engine import ExitReason, \
-    ConjectureRunner
+from hypothesis.internal.conjecture.engine import ConjectureRunner
 
 MAX_SHRINKS = 2000
 
