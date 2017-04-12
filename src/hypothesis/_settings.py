@@ -25,6 +25,7 @@ this module can be modified.
 from __future__ import division, print_function, absolute_import
 
 import os
+import sys
 import inspect
 import warnings
 import threading
@@ -572,6 +573,18 @@ If set to True, Hypothesis will run a preliminary health check before
 attempting to actually execute your test.
 """
 )
+
+
+settings.define_setting(
+    'use_coverage_information',
+    description="""
+If this is set to True, Hypothesis will use a tracing function to try to
+improve the quality of testing. This will default to false if you already
+have a tracing function installed, otherwise to True.
+""",
+    default=sys.gettrace() is None, show_default=True,
+)
+
 
 settings.lock_further_definitions()
 

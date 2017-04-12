@@ -48,6 +48,11 @@ from hypothesis.internal.conjecture.data import Status, StopTest, \
 from hypothesis.searchstrategy.strategies import SearchStrategy
 from hypothesis.internal.conjecture.engine import ExitReason, \
     ConjectureRunner
+from hypothesis.utils.conventions import UniqueIdentifier
+from hypothesis.internal.tracking import start_tracking, stop_tracking
+
+
+LINE_COVERAGE = UniqueIdentifier("LINE_COVERAGE")
 
 
 def new_random():
@@ -109,7 +114,20 @@ def reify_and_execute(
                 report(
                     lambda: 'Trying example: %s(%s)' % (
                         test.__name__, arg_string(test, args, kwargs)))
-            return test(*args, **kwargs)
+
+            if Settings.default.use_coverage_information:
+                    start_tracking()
+                    try:
+                        return test(*args, **kwargs)
+                    finally:
+                        lines_covered = stop_tracking()
+                        data.add_tags(
+                            (LINE_COVERAGE, filename, line)
+                            for filename, lines in lines_covered.items()
+                            for line in lines
+                        )
+            else:
+                return test(*args, **kwargs)
     return run
 
 
@@ -408,6 +426,7 @@ def process_arguments_to_given(
         selfy = kwargs.get(argspec.args[0])
     elif arguments:
         selfy = arguments[0]
+
     test_runner = new_style_executor(selfy)
 
     arguments = tuple(arguments)

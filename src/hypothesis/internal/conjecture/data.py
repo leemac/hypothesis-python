@@ -76,12 +76,16 @@ class ConjectureData(object):
         self.start_time = benchmark_time()
         self.events = set()
         self.bind_points = set()
+        self.tags = set()
 
     def __assert_not_frozen(self, name):
         if self.frozen:
             raise Frozen(
                 'Cannot call %s on frozen ConjectureData' % (
                     name,))
+
+    def add_tags(self, tags):
+        self.tags.update(tags)
 
     @property
     def index(self):

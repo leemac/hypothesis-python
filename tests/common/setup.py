@@ -35,17 +35,18 @@ def run():
     assert os.path.exists(charmap_file())
     assert isinstance(settings, type)
 
+    defaults = settings(
+        timeout=-1, strict=True, use_coverage_information=False)
+
     settings.register_profile(
-        'default', settings(timeout=-1, strict=True)
+        'default', defaults
     )
 
     settings.register_profile(
-        'speedy', settings(
-            timeout=1, max_examples=5,
-        ))
+        'speedy', settings(defaults, timeout=1, max_examples=5,))
 
     settings.register_profile(
-        'nonstrict', settings(strict=False)
+        'nonstrict', settings(defaults, strict=False)
     )
 
     settings.load_profile(os.getenv('HYPOTHESIS_PROFILE', 'default'))

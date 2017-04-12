@@ -52,6 +52,8 @@ FALSE_POSITIVE_RATE = 0.01
 MIN_RUNS = 500
 MAX_RUNS = MIN_RUNS * 20
 
+N_EXAMPLES_PER_RUN = Settings.default.max_mutations * 2
+
 
 def cumulative_normal(x):
     return 0.5 * (1 + math.erf(x / math.sqrt(2)))
@@ -173,12 +175,12 @@ def define_test(specifier, q, predicate, condition=None):
             successful_runs[0] += 1
             if predicate(value):
                 count[0] += 1
-        for _ in range(MAX_RUNS // 10):
+        for _ in range(MAX_RUNS // N_EXAMPLES_PER_RUN):
             ConjectureRunner(
                 test_function,
                 settings=Settings(
-                    max_examples=10,
-                    max_iterations=100,
+                    max_examples=N_EXAMPLES_PER_RUN,
+                    max_iterations=N_EXAMPLES_PER_RUN * 10,
                 )).run()
         successful_runs = successful_runs[0]
         count = count[0]

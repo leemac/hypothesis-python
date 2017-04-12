@@ -528,3 +528,18 @@ def test_fully_exhaust_base():
     runner.run()
     assert len(seen) > 256
     assert len({x[0] for x in seen}) == 256
+
+
+def test_corpus_tagging():
+    def f(data):
+        if data.draw_bytes(1)[0] & 1:
+            data.add_tags({'odd'})
+        else:
+            data.add_tags({'even'})
+    runner = ConjectureRunner(f, settings=settings(
+        database=None,
+    ))
+    runner.run()
+    assert len(runner.corpus) == 2
+    assert any(c[0] & 1 for c in runner.corpus)
+    assert not all(c[0] & 1 for c in runner.corpus)
