@@ -444,6 +444,7 @@ def given(*generator_arguments, **generator_kwargs):
             repr_for_last_exception = [None]
 
             def evaluate_test_data(data):
+                import unittest
                 try:
                     result = test_runner(data, reify_and_execute(
                         search_strategy, test,
@@ -458,7 +459,7 @@ def given(*generator_arguments, **generator_kwargs):
                     data.mark_invalid()
                 except (
                     HypothesisDeprecationWarning, FailedHealthCheck,
-                    StopTest,
+                    StopTest, unittest.SkipTest,
                 ):
                     raise
                 except Exception:
